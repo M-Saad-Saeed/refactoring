@@ -1,35 +1,51 @@
-"""
-SNIPPET 1 — Single Responsibility Principle (SRP)
-
-Smell: this ONE class gathers data, formats it as HTML, AND emails it.
-Three reasons to change = three responsibilities crammed together.
-
-Your job (via the AI harness):
-  Split into focused pieces so that changing the email provider does NOT
-  force you to touch the formatting or the data-gathering code.
-"""
+"""Generate sales reports with separate calculation, formatting, and delivery."""
 
 import smtplib
 
+SMTP_HOST = "smtp.brunel.ac.uk"
+SMTP_PORT = 587
+REPORT_SENDER = "reports@brunel.ac.uk"
+REPORT_RECIPIENT = "boss@brunel.ac.uk"
 
-class SalesReport:
+
+def summarize_sales(sales):
+    """Return the number of sales and their total in the original order."""
+    total = 0
+    for sale_amount in sales:
+        total = total + sale_amount
+    return len(sales), total
+
+
+def format_sales_report(sales_count, total):
+    """Render a sales summary as HTML without sending it."""
+    return (
+        "<html><body>"
+        "<h1>Sales Report</h1>"
+        f"<p>Number of sales: {sales_count!s}</p>"
+        f"<p>Total: {total!s}</p>"
+        "</body></html>"
+    )
+
+
+def send_sales_report(html):
+    """Deliver report HTML using the configured SMTP server."""
+    server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+    server.sendmail(REPORT_SENDER, REPORT_RECIPIENT, html)
+    server.quit()
+
+
+# The compatibility coordinator intentionally exposes only generate().
+class SalesReport:  # pylint: disable=too-few-public-methods
+    """Coordinate sales reporting through the existing public interface."""
+
     def __init__(self, sales):
         self.sales = sales
 
     def generate(self):
-        # data + formatting + delivery all tangled together
-        total = 0
-        for s in self.sales:
-            total = total + s
-        html = "<html><body>"
-        html += "<h1>Sales Report</h1>"
-        html += "<p>Number of sales: " + str(len(self.sales)) + "</p>"
-        html += "<p>Total: " + str(total) + "</p>"
-        html += "</body></html>"
-
-        server = smtplib.SMTP("smtp.brunel.ac.uk", 587)
-        server.sendmail("reports@brunel.ac.uk", "boss@brunel.ac.uk", html)
-        server.quit()
+        """Run the reporting workflow and return the delivered HTML."""
+        sales_count, total = summarize_sales(self.sales)
+        html = format_sales_report(sales_count, total)
+        send_sales_report(html)
         return html
 
 
