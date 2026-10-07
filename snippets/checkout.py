@@ -10,27 +10,36 @@ Your job (via the AI harness):
 """
 
 
-def calc(c, m, lp):
-    # c = cart items, m = membership level, lp = loyalty points
-    if c != None:
-        if len(c) > 0:
-            t = 0
-            for i in c:
-                t = t + i["p"] * i["q"]
-            if m == 2:
-                t = t - t * 0.10
-            else:
-                if m == 3:
-                    t = t - t * 0.20
-            if lp > 500:
-                t = t - 5
-            if t < 0:
-                t = 0
-            return t
-        else:
-            return 0
-    else:
+MEMBERSHIP_LEVEL_TWO = 2
+MEMBERSHIP_LEVEL_THREE = 3
+MEMBERSHIP_LEVEL_TWO_DISCOUNT_RATE = 0.10
+MEMBERSHIP_LEVEL_THREE_DISCOUNT_RATE = 0.20
+LOYALTY_POINTS_THRESHOLD = 500
+LOYALTY_DISCOUNT_AMOUNT = 5
+
+
+def calc(
+        cart, membership_level, loyalty_points):
+    if cart is None or len(cart) == 0:
         return 0
+
+    subtotal = 0
+    for item in cart:
+        unit_price = item["p"]
+        quantity = item["q"]
+        subtotal = subtotal + unit_price * quantity
+
+    total = subtotal
+    if membership_level == MEMBERSHIP_LEVEL_TWO:
+        total = total - total * MEMBERSHIP_LEVEL_TWO_DISCOUNT_RATE
+    else:
+        if membership_level == MEMBERSHIP_LEVEL_THREE:
+            total = total - total * MEMBERSHIP_LEVEL_THREE_DISCOUNT_RATE
+    if loyalty_points > LOYALTY_POINTS_THRESHOLD:
+        total = total - LOYALTY_DISCOUNT_AMOUNT
+    if total < 0:
+        total = 0
+    return total
 
 
 if __name__ == "__main__":
