@@ -18,8 +18,20 @@ LOYALTY_POINTS_THRESHOLD = 500
 LOYALTY_DISCOUNT_AMOUNT = 5
 
 
-def calc(
-        cart, membership_level, loyalty_points):
+def _apply_membership_discount(total, membership_level):
+    """Apply the matching membership rate, or leave the total unchanged."""
+    if membership_level == MEMBERSHIP_LEVEL_TWO:
+        discount_rate = MEMBERSHIP_LEVEL_TWO_DISCOUNT_RATE
+    elif membership_level == MEMBERSHIP_LEVEL_THREE:
+        discount_rate = MEMBERSHIP_LEVEL_THREE_DISCOUNT_RATE
+    else:
+        return total
+
+    return total - total * discount_rate
+
+
+def calc(cart, membership_level, loyalty_points):
+    """Apply membership then loyalty discounts, with a minimum total of zero."""
     if cart is None or len(cart) == 0:
         return 0
 
@@ -29,19 +41,12 @@ def calc(
         quantity = item["q"]
         subtotal = subtotal + unit_price * quantity
 
-    total = subtotal
-    if membership_level == MEMBERSHIP_LEVEL_TWO:
-        total = total - total * MEMBERSHIP_LEVEL_TWO_DISCOUNT_RATE
-    else:
-        if membership_level == MEMBERSHIP_LEVEL_THREE:
-            total = total - total * MEMBERSHIP_LEVEL_THREE_DISCOUNT_RATE
+    total = _apply_membership_discount(subtotal, membership_level)
     if loyalty_points > LOYALTY_POINTS_THRESHOLD:
         total = total - LOYALTY_DISCOUNT_AMOUNT
-    if total < 0:
-        total = 0
-    return total
+    return max(total, 0)
 
 
 if __name__ == "__main__":
-    cart = [{"p": 20, "q": 2}, {"p": 15, "q": 1}]
-    print("Total:", calc(cart, 3, 600))
+    example_cart = [{"p": 20, "q": 2}, {"p": 15, "q": 1}]
+    print("Total:", calc(example_cart, MEMBERSHIP_LEVEL_THREE, 600))
